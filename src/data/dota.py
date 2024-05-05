@@ -7,7 +7,7 @@ from typing import Optional
 
 from download import download_file_from_dropbox
 from constants import ROOT
-from utils import listdir_nohidden
+from utils import listdir_nohidden, lazy_stof, lazy_stoi
 
 from PIL import Image
 from torchvision.datasets import VisionDataset
@@ -33,6 +33,36 @@ DATASET_DICT = {
 
 IMAGES_DIRNAME = "images"
 LABELS_DIRNAME = "labels"
+
+class Target(dict):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self["boxes"] = []
+        self["labels"] = []
+        self["difficult"] = []
+
+    def __str__(self):
+        return json.dumps(
+            {
+                "attributes": [
+                    k for k in self.keys()
+                    if k not in ["boxes", "labels", "difficult"]
+                ],
+                "features": ["boxes", "labels", "difficult"],
+                "n_features": len(self['boxes'])
+            }
+        )
+
+    def __repr__(self):
+        return self.__str__()
+
+    def add_attribute(self, key: str, value: str | int | float):
+        self[key] = value
+
+    def add_box(self, box: list[float], label: str, difficult: int):
+        self["boxes"].append(box)
+        self["labels"].append(label)
+        self["difficult"].append(difficult)
 
 class DOTA(VisionDataset):
     def __init__(
@@ -87,12 +117,12 @@ class DOTA(VisionDataset):
     def __getitem__(self, idx):
         # Load image and label
         img = Image.open(self.images[idx]).convert("RGB")
-        target = self.parse_dota_labels(self.labels[idx])
+        target = self.parse_dota_labels(self.targets[idx])
 
         # Apply transforms
         if self.transforms is not None:
-            img, label = self.transforms(img, label)
-        return img, label
+            img, target = self.transforms(img, target)
+        return img, target
 
     @staticmethod
     def val_files(file_path: str) -> bool:
@@ -148,6 +178,19 @@ class DOTA(VisionDataset):
                 url, path, **kwargs
             )
 
-    def parse_dota_labels(self, idx: int) -> dict[str, Tensor | BoundingBoxes]:
-        with open(self.labels[idx], "r") as f:
-            return json.load(f)
+    @staticmethod
+    def parse_dota_labels(label: str) -> Target:
+        res = Target()
+        with open(label, "r") as f:
+            lines = f.readlines()
+            for line in lines:
+                ws_split = line.split()
+                if len(ws_split) == 1:
+                    l0, l1 = ws_split[0].split(":")
+                    res.add_attribute(lazy_stof(l0), lazy_stof(l1))
+                elif len(ws_split) == 10:
+                    box = [float(x) for x in ws_split[:8]]
+                    label = ws_split[8]
+                    difficult = int(ws_split[9])
+                    res.add_box(box, label, difficult)
+        return res
