@@ -161,7 +161,14 @@ cython_debug/
 
 # Directories containing large files
 data/
+!src/data/
 models/
 
 # Secrets
 credentials.json
+
+# DS Store files
+.DS_Store
+
+# zip files
+*.zip
