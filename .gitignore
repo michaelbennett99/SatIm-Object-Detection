@@ -172,3 +172,6 @@ credentials.json
 
 # zip files
 *.zip
+
+# Test notebooks
+test.ipynb
