@@ -180,3 +180,6 @@ credentials.json
 
 # Test notebooks
 test.ipynb
+
+# Docker
+/Docker
