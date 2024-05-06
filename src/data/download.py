@@ -109,6 +109,11 @@ def download_file_from_dropbox(
     if dry_run:
         return
 
+    # Make parent directory
+    parent = os.path.dirname(file_name)
+    if not os.path.isdir(parent):
+        os.makedirs(parent)
+
     # headers = {'user-agent': 'Wget/1.16 (linux-gnu)'}
     r = requests.get(url, stream=True)
 
