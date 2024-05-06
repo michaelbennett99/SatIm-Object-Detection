@@ -161,4 +161,22 @@ cython_debug/
 
 # Directories containing large files
 data/
+!src/data/
 models/
+src/model/datasets/
+src/model/runs/
+
+# Model weights
+*.pt
+
+# Secrets
+credentials.json
+
+# DS Store files
+.DS_Store
+
+# zip files
+*.zip
+
+# Test notebooks
+test.ipynb
