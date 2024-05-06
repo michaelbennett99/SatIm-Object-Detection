@@ -46,19 +46,19 @@ DEFAULT_DOTA_PATH = Path(os.getcwd()) / "data" / "dota"
 DATASET_DICT = {
     ("train", "hbb"): {
         "url": DOTA_TRAIN_HBB_URL,
-        "base_dir": os.path.join("hbb", "train")
+        "base_dir": os.path.join("hbb", ".train")
     },
     ("val", "hbb"): {
         "url": DOTA_VAL_HBB_URL,
-        "base_dir": os.path.join("hbb", "val")
+        "base_dir": os.path.join("hbb", ".val")
     },
     ("train", "obb"): {
         "url": DOTA_TRAIN_OBB_URL,
-        "base_dir": os.path.join("obb", "train")
+        "base_dir": os.path.join("obb", ".train")
     },
     ("val", "obb"): {
         "url": DOTA_VAL_OBB_URL,
-        "base_dir": os.path.join("obb", "val")
+        "base_dir": os.path.join("obb", ".val")
     }
 }
 
