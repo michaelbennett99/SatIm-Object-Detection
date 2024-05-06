@@ -163,6 +163,11 @@ cython_debug/
 data/
 !src/data/
 models/
+src/model/datasets/
+src/model/runs/
+
+# Model weights
+*.pt
 
 # Secrets
 credentials.json
