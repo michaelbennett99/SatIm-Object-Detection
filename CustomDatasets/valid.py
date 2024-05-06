@@ -1,6 +1,6 @@
 from warnings import warn
 
-from src.data.download import download_file_from_gdrive_gdown, unzip_contents
+from .download import download_file_from_gdrive_gdown, unzip_contents
 from constants import ROOT
 
 VALID_PATH = ROOT / "data" / "raw" / "valid"

@@ -1,7 +1,7 @@
 import argparse
 from warnings import warn
 
-from src.data.download import download_folder_from_gdrive_gdown, unzip_contents
+from .download import download_folder_from_gdrive_gdown, unzip_contents
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(

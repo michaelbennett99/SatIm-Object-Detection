@@ -12,7 +12,7 @@ from google.oauth2 import service_account
 import gdown
 from tqdm import tqdm
 
-from utils import listdir_nohidden
+from .utils import listdir_nohidden
 
 def download_from_gdrive_api(
         file_id: Path | str, file_name: Path | str, credentials: dict

@@ -6,9 +6,8 @@ from zipfile import ZipFile
 from pathlib import Path
 from typing import Optional
 
-from download import download_file_from_dropbox
-from constants import ROOT
-from utils import listdir_nohidden, lazy_stof, lazy_stoi
+from .download import download_file_from_dropbox
+from .utils import listdir_nohidden, lazy_stof
 
 import torch
 import torchvision.transforms.functional as F
@@ -38,7 +37,7 @@ DOTA_VAL_OBB_URL = (
     "val.zip?rlkey=zv7fgnkf3yqztj93cztzsfsgd&st=ghtu1ntz&dl=1"
 )
 
-DEFAULT_DOTA_PATH = ROOT / "data" / "dota"
+DEFAULT_DOTA_PATH = Path(os.getcwd()) / "data" / "dota"
 
 DATASET_DICT = {
     ("train", "hbb"): {
