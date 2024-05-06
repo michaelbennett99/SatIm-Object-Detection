@@ -1,8 +1,2 @@
-torch
-torchvision
 ultralytics
-numpy
-pandas
-matplotlib
 gdown
-tqdm
