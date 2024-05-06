@@ -1,50 +1,13 @@
 import os
-import io
 import requests
 from pathlib import Path
 from zipfile import ZipFile
 from typing import Optional
 
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseDownload
-from google.oauth2 import service_account
-
 import gdown
 from tqdm import tqdm
 
 from .utils import listdir_nohidden
-
-def download_from_gdrive_api(
-        file_id: Path | str, file_name: Path | str, credentials: dict
-    ):
-    """
-    Downloads a file from Google Drive.
-
-    Args:
-        file_id: The ID of the file to download.
-        file_name: The name of the file to save the downloaded file as.
-        credentials: A dictionary containing the credentials for the Google Drive API.
-
-    Returns:
-        None
-    """
-    if os.path.exists(file_name):
-        print(f"File {file_name} already exists.")
-        return
-    # Authenticate with the Google Drive API
-    creds = service_account.Credentials.from_service_account_info(credentials)
-    service = build("drive", "v3", credentials=creds)
-
-    # Download the file
-    request = service.files().get_media(fileId=file_id)
-    fh = io.FileIO(file_name, "wb")
-    downloader = MediaIoBaseDownload(fh, request)
-    done = False
-    while done is False:
-        status, done = downloader.next_chunk()
-        print(f"Download {int(status.progress() * 100)}%.")
-
-    return os.path.abspath(file_name)
 
 def download_file_from_gdrive_gdown(
         url: str,
