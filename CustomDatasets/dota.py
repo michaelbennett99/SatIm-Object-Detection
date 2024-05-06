@@ -19,6 +19,8 @@ from torch import tensor, Tensor
 from torchvision.tv_tensors._bounding_boxes import BoundingBoxes
 from torchvision.utils import draw_bounding_boxes
 
+# Download links for the DOTA dataset
+
 DOTA_TRAIN_HBB_URL = (
     "https://www.dropbox.com/scl/fi/k5e9wdfdu4qppyz283nss/"
     "train_hbb.zip?rlkey=wrlr3fpqk8x02r5xzph8uuedk&st=kqaeuv3x&dl=1"
@@ -30,12 +32,14 @@ DOTA_VAL_HBB_URL = (
 
 DOTA_TRAIN_OBB_URL = (
     "https://www.dropbox.com/scl/fi/zu3p9wqzlu86v0kuu4v0p/"
-    "train.zip?rlkey=bwih2x8xd3zpldj7l1s4owy9a&st=zrisaio3&dl=0"
+    "train.zip?rlkey=bwih2x8xd3zpldj7l1s4owy9a&st=zrisaio3&dl=1"
 )
 DOTA_VAL_OBB_URL = (
     "https://www.dropbox.com/scl/fi/k3d45d22iz1op3gifazw4/"
     "val.zip?rlkey=zv7fgnkf3yqztj93cztzsfsgd&st=ghtu1ntz&dl=1"
 )
+
+# Dataset defaults
 
 DEFAULT_DOTA_PATH = Path(os.getcwd()) / "data" / "dota"
 
@@ -62,6 +66,10 @@ IMAGES_DIRNAME = "images"
 LABELS_DIRNAME = "labels"
 
 class Label(Enum):
+    """
+    Enum class for the labels in the DOTA dataset. Automatically assigns
+    integers to each label.
+    """
     large_vehicle = auto()
     small_vehicle = auto()
     plane = auto()
@@ -82,6 +90,11 @@ class Label(Enum):
     helipad = auto()
 
 class Target(dict):
+    """
+    Dict subclass that mostly acts the same but has a few extra methods for
+    convenience and overwrites __str__ and __repr__ to give a more informative
+    string representation.
+    """
     def __init__(self, boxes = [], labels = [], difficult = [],  **kwargs):
         super().__init__(**kwargs)
         self["boxes"] = boxes
@@ -112,6 +125,11 @@ class Target(dict):
         self["difficult"].append(difficult)
 
 class DOTA(VisionDataset):
+    """
+    Class for the DOTA dataset. The dataset is split into train and val
+    sets, and the annotations can be either horizontal bounding boxes (hbb)
+    or oriented bounding boxes (obb).
+    """
     def __init__(
         self,
         root: Path | str = DEFAULT_DOTA_PATH,
@@ -121,6 +139,27 @@ class DOTA(VisionDataset):
         transforms: Optional[callable] = None,
         download: Optional[bool] = True
     ):
+        """
+        Initialises the DOTA dataset. Gives you either the train or val split
+        with either horizontal bounding boxes (hbb) or oriented bounding boxes
+        and optional conversion to tensors (required for transforms).
+
+        Args:
+            root (Path | str): The root directory to save the dataset. Defaults
+                to <current working directory>/data/dota.
+            split (str): The split of the dataset to use. Either "train" or
+                "val". Defaults to "train".
+            annotation_type (str): The type of annotation to use. Either "hbb"
+                or "obb". Defaults to "hbb".
+            to_tensor (bool): Whether to convert the images and targets to
+                tensors. Defaults to True.
+            transforms (callable): A callable transform to apply to the images
+                and targets. The transform should take in an image and a target
+                dictionary and return the transformed image and target. Defaults
+                to None. If not none, to_tensor is set to True.
+            download (bool): Whether to download the dataset if it doesn't
+                exist. Defaults to True.
+        """
         super().__init__(root, transforms)
 
         self.split = verify_str_arg(split, "split", ("train", "val"))
@@ -133,6 +172,11 @@ class DOTA(VisionDataset):
         if transforms:
             self.to_tensor = True
         self.transforms = transforms
+
+        # Cannot do transforms or tensors for obb annotations
+        if self.annotation_type == "obb":
+            self.to_tensor = False
+            self.transforms = None
 
         # Set up the download
         dataset_dict = DATASET_DICT[(self.split, self.annotation_type)]
@@ -186,6 +230,9 @@ class DOTA(VisionDataset):
 
     @staticmethod
     def to_tensors(img: Image, target: Target) -> tuple[Tensor, Target]:
+        """
+        Convert images and targets to tensors.
+        """
         img = F.to_tensor(img)
         target = dict(
             boxes=BoundingBoxes(
@@ -200,7 +247,10 @@ class DOTA(VisionDataset):
         )
         return img, target
 
-    def draw_bounding_boxes(self, idx: int, width: int = 5):
+    def draw_bounding_boxes(self, idx: int, width: int = 5) -> Image.Image:
+        """
+        Draw the bounding boxes on the image at index idx with the given width.
+        """
         img, target = self.__getitem__(idx)
 
         # guarantee we get tensors
@@ -270,6 +320,9 @@ class DOTA(VisionDataset):
             )
 
     def parse_dota_targets(self, target: str) -> Target:
+        """
+        Parse the DOTA target file into a Target object.
+        """
         res = Target()
         with open(target, "r") as f:
             lines = f.readlines()
@@ -289,5 +342,4 @@ class DOTA(VisionDataset):
                     label = getattr(Label, label)
                     difficult = int(ws_split[-1])
                     res.add_box(box, label, difficult)
-
         return res
