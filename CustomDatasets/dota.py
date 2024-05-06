@@ -129,6 +129,14 @@ class DOTA(VisionDataset):
     Class for the DOTA dataset. The dataset is split into train and val
     sets, and the annotations can be either horizontal bounding boxes (hbb)
     or oriented bounding boxes (obb).
+
+    Once downloaded, indexing the dataset will return a tuple of an image
+    and a target dictionary. The target dictionary contains the following
+    keys:
+        - boxes: A BoundingBoxes object containing the bounding boxes.
+        - labels: A tensor containing the labels for each bounding box.
+        - difficult: A tensor containing the difficulty of each bounding box.
+    and any other annotation keys that are present in the target file.
     """
     def __init__(
         self,
