@@ -162,12 +162,14 @@ cython_debug/
 # Directories containing large files
 data/
 !src/data/
-models/
+
+# Directories containing model artifacts
+models/**/*.jpg
+models/**/*.pt
+
 src/model/datasets/
 src/model/runs/
-
-# Model weights
-*.pt
+src/model/**/*.pt
 
 # Secrets
 credentials.json
