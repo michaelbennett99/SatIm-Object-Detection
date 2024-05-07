@@ -166,10 +166,14 @@ data/
 # Directories containing model artifacts
 models/**/*.jpg
 models/**/*.pt
+models/**/datasets
+models/**/runs
 
 src/model/datasets/
 src/model/runs/
 src/model/**/*.pt
+
+runs/
 
 # Secrets
 credentials.json
@@ -188,3 +192,5 @@ test.ipynb
 
 #onstart
 onstart.sh
+
+datasets/
