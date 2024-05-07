@@ -4,5 +4,6 @@
 
 python ../yolo_dota_train.py \
     --weights 'yolov8n-obb.pt' \
-    --batch-size 64 \
-    --pretrained
+    --batch-size 32 \
+    --pretrained \
+    --name 'yolov8n-obb-pretrained'

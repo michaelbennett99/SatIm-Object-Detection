@@ -5,4 +5,5 @@
 
 python ../yolo_dota_train.py --weights $1 \
     --resume \
-    --batch-size 64
+    --batch-size 32 \
+    --name 'yolov8n-obb-resume'
