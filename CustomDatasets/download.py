@@ -1,7 +1,7 @@
 import os
 import requests
 from pathlib import Path
-from zipfile import ZipFile
+from zipfile import ZipFile, BadZipFile
 from typing import Optional
 
 import gdown
@@ -97,28 +97,20 @@ def download_file_from_dropbox(
             os.remove(file_name)
             raise e
 
-def unzip_contents(path: Path | str):
-    # Check if we are directly given a zip file
-    if os.path.exists(path) and os.path.splitext(path)[1] == ".zip":
-        print(f"Unzipping {path}")
-        with ZipFile(path, "r") as zip_ref:
-            zip_ref.extractall(os.path.dirname(path))
-        os.remove(path)
+def unzip_file(
+        from_path: Path | str,
+        to_dir: Path | str = None,
+        remove_finished: bool = True
+    ):
+    if to_dir is None:
+        to_dir = os.path.dirname(from_path)
 
-        unzip_contents(path.removesuffix(".zip"))
+    print(f"Extracting {from_path} to {to_dir}")
+    try:
+        with ZipFile(from_path, 'r') as zip_ref:
+            zip_ref.extractall(to_dir)
+    except BadZipFile:
+        return
 
-    # Otherwise, search directory for zip files
-    elif os.path.isdir(path):
-        print(f"Searching {path} for zip files...")
-        for d in tqdm(listdir_nohidden(path), desc=f"Unzipping {os.path.basename(path)}"):
-            zip_path = os.path.join(path, d)
-            if zip_path.endswith(".zip"):
-                print(f"Unzipping {d}")
-                with ZipFile(zip_path, "r") as zip_ref:
-                    zip_ref.extractall(path)
-                os.remove(zip_path)
-
-            # Recursively unzip the contents
-                unzip_contents(path.removesuffix(".zip"))
-            elif os.path.isdir(zip_path):
-                unzip_contents(zip_path)
+    if remove_finished:
+        os.remove(from_path)
