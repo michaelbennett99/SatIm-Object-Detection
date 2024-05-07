@@ -2,11 +2,13 @@ import os
 import json
 
 from pathlib import Path
+from shutil import rmtree
 from typing import Optional
 from warnings import warn
 
 from torchvision.datasets import VisionDataset
-from torchvision.datasets.utils import verify_str_arg, extract_archive
+from torchvision.datasets.utils import verify_str_arg
+from PIL import Image
 
 from .download import download_file_from_gdrive_gdown, unzip_file
 from .utils import listdir_nohidden
@@ -16,6 +18,7 @@ VALID_LABELS_URL = "https://drive.google.com/uc?id=1F6Xp5QLmE9vwjwzh82Gsq1jUyzV8
 VALID_IMAGES_URL = "https://drive.google.com/uc?id=1Q1j_OgNlnJG2RlzQniFSIpLjozGAJ1D_"
 
 # Dataset defaults
+
 DEFAULT_VALID_PATH = Path(os.getcwd()) / "data" / "valid"
 
 DATASET_DICT = {
@@ -34,6 +37,17 @@ DATASET_DICT = {
         "path": "images.zip",
         "name": "images"
     }
+}
+
+# Constants relevant to YOLO format
+
+YOLO_CATEGORIES = {
+    "bridge": 0,
+    "smallvehicle": 1,
+    "largevehicle": 2,
+    "ship": 3,
+    "plane": 4,
+    "harbor": 5
 }
 
 def extract(
@@ -111,3 +125,82 @@ class VALID(VisionDataset):
                 return False
 
         return True
+
+    def convert_to_yolo(
+            self,
+            out_dir: Path | str,
+            annotation_type: Optional[str] = "obbox",
+            categories: dict[str, int] = YOLO_CATEGORIES,
+            split: Optional[float] = 0.8,
+            overwrite: bool = False
+        ):
+        # clean up existing directory
+        if not overwrite and os.path.isdir(out_dir):
+            raise FileExistsError(
+                f"Directory {out_dir} already exists. Set overwrite=True to"
+                " overwrite existing directory."
+            )
+        if os.path.isdir(out_dir):
+            rmtree(out_dir)
+        images_dir = os.path.join(out_dir, "images")
+        labels_dir = os.path.join(out_dir, "labels")
+        os.makedirs(images_dir)
+        os.makedirs(labels_dir)
+
+        # for every label, read json file, fetch relevant image, scale image to
+        # 640x640, save yolo format label and image to out_dir
+        orig_labels_dir = os.path.join(
+            self.root, self.dataset_dict["labels"]["name"]
+        )
+        labels = listdir_nohidden(orig_labels_dir)
+        for label in labels:
+            with open(os.path.join(orig_labels_dir, label)) as f:
+                label_data = json.load(f)
+
+            # get relevant data
+            iden = label_data['id']
+            width = label_data['width']
+            height = label_data['height']
+
+            img_name = label_data['file_name']
+            img_path = os.path.join(self.root, img_name)
+
+            annotations = [ # includes only relevant annotations to categories
+                (x['category_name'], x[annotation_type])
+                for x in label_data['detection']
+                if x['category_name'] in categories.keys()
+            ]
+
+            # proceed only if this file has some relevant annotations
+            if len(annotations) == 0:
+                continue
+
+            # load image
+            img = Image.open(img_path).convert("RGB")
+            img = img.resize((640, 640))
+            new_img_name = f"{iden}.jpg"
+            img.save(os.path.join(images_dir, new_img_name))
+
+            # write to .txt file in YOLO format
+
+            with open(os.path.join(labels_dir, f"{iden}.txt"), "w") as f:
+                for annotation in annotations:
+                    category = categories[annotation[0]]
+                    f.write(f"{category} ")
+                    for point in annotation[1]:
+                        x, y = point
+                        x /= width
+                        y /= height
+                        f.write(f"{x} {y} ")
+                    f.write("\n")
+
+        # finally, write valid.yml file
+        with open(os.path.join(os.path.dirname(out_dir), "valid.yaml"), "w") as f:
+            f.write(f"path: {os.path.basename(out_dir)}\n")
+            f.write(f"train: {os.path.basename(images_dir)}\n")
+            f.write(f"val: {os.path.basename(images_dir)}\n")
+
+            f.write("\n")
+            f.write("names: \n")
+            for k, v in categories.items():
+                f.write(f"    {v}: {k}\n")
