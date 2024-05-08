@@ -68,7 +68,7 @@ def modify_labels(path: Path | str, copy_path: Optional[Path | str] = None):
                     cat, res = line.split(" ", 1)
                     cat = int(cat)
                     if cat in MAPPING:
-                        f.write(f"{MAPPING[cat]} {res}\n")
+                        f.write(f"{MAPPING[cat]} {res}")
                         valid_boxes += 1
             if valid_boxes == 0:
                 os.remove(label)
