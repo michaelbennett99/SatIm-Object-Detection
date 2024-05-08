@@ -1,6 +1,7 @@
 import os
 import json
 
+from random import random, seed
 from pathlib import Path
 from shutil import rmtree
 from typing import Optional
@@ -142,10 +143,18 @@ class VALID(VisionDataset):
             )
         if os.path.isdir(out_dir):
             rmtree(out_dir)
+
+        # make required directories
         images_dir = os.path.join(out_dir, "images")
         labels_dir = os.path.join(out_dir, "labels")
-        os.makedirs(images_dir)
-        os.makedirs(labels_dir)
+        train_dir = "train"
+        val_dir = "val"
+        for d in [images_dir, labels_dir]:
+            for s in [train_dir, val_dir]:
+                os.makedirs(os.path.join(d, s))
+
+        # set random seed for reproducibility of train-val split
+        seed(42)
 
         # for every label, read json file, fetch relevant image, scale image to
         # 640x640, save yolo format label and image to out_dir
@@ -154,6 +163,12 @@ class VALID(VisionDataset):
         )
         labels = listdir_nohidden(orig_labels_dir)
         for label in labels:
+            rand = random()
+            if rand < split:
+                split_dir = train_dir
+            else:
+                split_dir = val_dir
+
             with open(os.path.join(orig_labels_dir, label)) as f:
                 label_data = json.load(f)
 
@@ -179,11 +194,13 @@ class VALID(VisionDataset):
             img = Image.open(img_path).convert("RGB")
             img = img.resize((640, 640))
             new_img_name = f"{iden}.jpg"
-            img.save(os.path.join(images_dir, new_img_name))
+            img.save(os.path.join(images_dir, split_dir, new_img_name))
 
             # write to .txt file in YOLO format
 
-            with open(os.path.join(labels_dir, f"{iden}.txt"), "w") as f:
+            with open(
+                os.path.join(labels_dir, split_dir, f"{iden}.txt"), "w"
+            ) as f:
                 for annotation in annotations:
                     category = categories[annotation[0]]
                     f.write(f"{category} ")
@@ -195,10 +212,12 @@ class VALID(VisionDataset):
                     f.write("\n")
 
         # finally, write valid.yml file
-        with open(os.path.join(os.path.dirname(out_dir), "valid.yaml"), "w") as f:
-            f.write(f"path: {os.path.basename(out_dir)}\n")
-            f.write(f"train: {os.path.basename(images_dir)}\n")
-            f.write(f"val: {os.path.basename(images_dir)}\n")
+        with open(
+            os.path.join(os.path.dirname(out_dir), "valid.yaml"), "w"
+        ) as f:
+            f.write(f"path: {os.path.join('.', os.path.basename(out_dir))}\n")
+            f.write(f"train: images/{train_dir}\n")
+            f.write(f"val: images/{train_dir}\n")
 
             f.write("\n")
             f.write("names: \n")
