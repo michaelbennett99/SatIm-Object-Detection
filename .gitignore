@@ -194,6 +194,3 @@ test.ipynb
 onstart.sh
 
 datasets/
-
-# remote runs
-remote_runs/
