@@ -3,7 +3,8 @@
 # Continue training from model already pretrained on DOTA
 
 python ../yolo_dota_train.py \
-    --weights 'yolov8n-obb.pt' \
+    --data './datasets/valid.yaml' \
+    --weights 'yolov8s-obb.pt' \
     --batch-size 32 \
     --pretrained \
-    --name 'yolov8n-obb-pretrained'
+    --name 'yolov8s-obb-valid-pretrained'
