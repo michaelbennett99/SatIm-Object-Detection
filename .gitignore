@@ -187,9 +187,6 @@ credentials.json
 # Test notebooks
 test.ipynb
 
-# Docker
-/Docker
-
 #onstart
 onstart.sh
 
